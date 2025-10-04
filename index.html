@@ -53,21 +53,36 @@
         
         <header class="text-center mb-6">
             <h1 class="text-3xl font-bold text-blue-400">現場日報</h1>
-            <p class="text-gray-400 mt-2">Lark Baseから起動するとデータが入力されます。</p>
+            <p class="text-gray-400 mt-2">記録者と日付で過去のデータを読み込めます。</p>
         </header>
 
         <form id="report-form" class="bg-gray-800 p-6 rounded-2xl shadow-2xl space-y-8">
             
+             <!-- 読み込みセクション -->
+            <section class="space-y-4 bg-gray-900/50 p-4 rounded-lg">
+                <h2 class="text-lg font-semibold text-blue-300 border-b border-gray-700 pb-2">過去データの読み込み</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div>
+                        <label for="load-recorder" class="block mb-2 text-sm font-medium text-gray-300">記録者</label>
+                        <input type="text" id="load-recorder" placeholder="検索する記録者名" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                    <div>
+                        <label for="load-date" class="block mb-2 text-sm font-medium text-gray-300">読み込む日付</label>
+                        <input type="date" id="load-date" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    </div>
+                </div>
+                 <button id="load-button" type="button" class="w-full mt-4 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">
+                    この条件で日報を読み込む
+                </button>
+            </section>
+
             <!-- 基本情報セクション -->
             <section class="space-y-4">
                 <h2 class="text-xl font-semibold text-blue-300 border-b border-gray-700 pb-2">基本情報</h2>
                 
                 <div>
-                    <label for="recorder" class="block mb-2 text-sm font-medium text-gray-300">記録者 (ローカル保存・読み込みのキー)</label>
-                    <div class="flex items-center gap-2">
-                        <input type="text" id="recorder" placeholder="例：田中 太郎" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                        <button id="load-button" type="button" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">読み込み</button>
-                    </div>
+                    <label for="recorder" class="block mb-2 text-sm font-medium text-gray-300">記録者 <span class="text-xs text-red-400">(必須)</span></label>
+                    <input type="text" id="recorder" placeholder="例：田中 太郎" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                 </div>
 
                 <div>
@@ -230,29 +245,20 @@
             const loadButton = document.getElementById('load-button');
             const resetButton = document.getElementById('reset-button');
             const statusMessage = document.getElementById('status-message');
-            const dateInput = document.getElementById('record-date');
+            
+            const loadRecorderInput = document.getElementById('load-recorder');
+            const loadDateInput = document.getElementById('load-date');
             const recorderInput = document.getElementById('recorder');
+            const recordDateInput = document.getElementById('record-date');
+
 
             // --- ▼▼▼ 設定項目 ▼▼▼ ---
             // データを中継するGAS（クライアントサイド）のWebアプリURL
             const GAS_CLIENT_URL = 'https://script.google.com/macros/s/AKfycbxua2AJ0wheh72my6FHP3flpZagHVmY4TOvanXzEylz5qJqmCRR3-1ZAD4QGjVXNy30TA/exec'; 
             // データをLark Baseに送るWebhook URL
             const LARK_WEBHOOK_URL = 'https://yjpw4ydvu698.jp.larksuite.com/base/automation/webhook/event/QJHWaPXK6wVAOdhMQOPjkV90pwf';
-            // ローカル保存用のキー
-            const STORAGE_KEY = 'dailyWorkReportData_v6'; 
             // --- ▲▲▲ 設定項目 ▲▲▲ ---
 
-
-            const formElementIds = [
-                'record-date', 'site-name', 'client', 'supervisor-1', 'chief-supervisor',
-                'contract-amount', 'contract-period', 'site-office',
-                'progress-rate', 'remaining-days', 'completion-date', 'inspection-date',
-                'previous-day-details', 'work-details', 'materials-used',
-                'inhouse-labor', 'machinery', 'outsourcing',
-                'material-cost', 'labor-cost', 'machinery-cost', 'outsourcing-cost',
-                'site-expense', 'total-cost'
-            ];
-            const allFormElementIds = ['recorder', ...formElementIds];
             
             // Lark Baseのフィールド名とHTMLのIDをマッピング
             const fieldNameToIdMap = {
@@ -266,51 +272,31 @@
                 "外注費": "outsourcing-cost", "現場経費": "site-expense", "原価合計": "total-cost",
             };
 
-            const setToday = () => {
+            const setToday = (dateInputElement) => {
                 const today = new Date();
                 today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
-                dateInput.value = today.toISOString().slice(0, 10);
-            };
-
-            const loadDataFromBrowser = () => {
-                const recorderName = recorderInput.value.trim();
-                if (!recorderName) {
-                    showStatusMessage('記録者名を入力してください。', 'error');
-                    return;
-                }
-                try {
-                    const allData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                    const recorderReports = allData[recorderName];
-                    if (recorderReports && recorderReports.length > 0) {
-                        const latestReport = recorderReports.reduce((latest, current) => {
-                            return new Date(current['record-date']) > new Date(latest['record-date']) ? current : latest;
-                        });
-                        allFormElementIds.forEach(id => {
-                            const element = document.getElementById(id);
-                            if (element && latestReport[id] !== undefined) {
-                                element.value = latestReport[id];
-                            }
-                        });
-                        setToday(); 
-                        showStatusMessage(`${recorderName}さんの前回の内容を読み込みました。`, 'success');
-                    } else {
-                        showStatusMessage(`${recorderName}さんの保存されたデータはありません。`, 'info');
-                    }
-                } catch (e) {
-                    console.error("ブラウザからのデータ読み込みに失敗:", e);
-                    showStatusMessage('読み込みに失敗しました。', 'error');
-                }
+                dateInputElement.value = today.toISOString().slice(0, 10);
             };
 
             const loadDataFromSheet = async () => {
                 if (!GAS_CLIENT_URL || GAS_CLIENT_URL === 'YOUR_GAS_CLIENT_URL') {
-                    console.info("GASクライアントURLが未設定のため、スプレッドシートからの読み込みをスキップします。");
+                    showStatusMessage('GASクライアントURLが未設定です。', 'error');
+                    return;
+                }
+                
+                const recorderName = loadRecorderInput.value.trim();
+                const loadDate = loadDateInput.value;
+
+                if (!recorderName || !loadDate) {
+                    showStatusMessage('検索する記録者と日付を入力してください。', 'error');
                     return;
                 }
 
-                showStatusMessage('スプレッドシートからデータを読み込み中...', 'info');
+                showStatusMessage('スプレッドシートからデータを検索中...', 'info');
+                const searchUrl = `${GAS_CLIENT_URL}?recorder=${encodeURIComponent(recorderName)}&date=${encodeURIComponent(loadDate)}`;
+                
                 try {
-                    const response = await fetch(GAS_CLIENT_URL);
+                    const response = await fetch(searchUrl);
                     if (!response.ok) throw new Error('GASからのデータ取得に失敗しました。');
                     
                     const data = await response.json();
@@ -322,25 +308,27 @@
                             element.value = data[fieldName];
                         }
                     }
-                    showStatusMessage('スプレッドシートからデータを読み込みました。', 'success');
+                    // 読み込みに成功したら、記録日を今日の日付に更新する
+                    setToday(recordDateInput);
+                    showStatusMessage('過去の日報を読み込みました。記録日は本日になっています。', 'success');
+
                 } catch(e) {
                     console.error("スプレッドシートからの読み込みエラー:", e);
-                    showStatusMessage(`シート読み込み失敗: ${e.message}`, 'error');
+                    showStatusMessage(`データが見つからないか、エラーが発生しました: ${e.message}`, 'error');
                 }
             };
             
             const saveData = async () => {
                 const recorderName = recorderInput.value.trim();
                 if (!recorderName) {
-                    showStatusMessage('記録者名を入力してください。保存できません。', 'error');
+                    showStatusMessage('記録者名を入力してください。', 'error');
                     return;
                 }
                 saveButton.disabled = true;
                 saveButtonText.textContent = '送信中...';
                 saveSpinner.classList.remove('hidden');
 
-                const larkRecord = { /* ... Webhook送信データ作成 ... */ };
-                // idからフィールド名に変換してlarkRecordを作成
+                const larkRecord = {};
                  Object.entries(fieldNameToIdMap).forEach(([fieldName, elementId]) => {
                     const element = document.getElementById(elementId);
                     if (element) {
@@ -367,31 +355,12 @@
                     saveButtonText.textContent = '保存してBaseに送信';
                     saveSpinner.classList.add('hidden');
                 }
-
-                const currentReport = {};
-                allFormElementIds.forEach(id => {
-                    currentReport[id] = document.getElementById(id)?.value || '';
-                });
-                try {
-                    const allData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                    const recorderReports = allData[recorderName] || [];
-                    const reportIndex = recorderReports.findIndex(r => r['record-date'] === currentReport['record-date']);
-                    if (reportIndex > -1) {
-                        recorderReports[reportIndex] = currentReport;
-                    } else {
-                        recorderReports.push(currentReport);
-                    }
-                    allData[recorderName] = recorderReports;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-                } catch (e) {
-                    console.error("ローカル保存に失敗:", e);
-                    showStatusMessage('ローカルへの保存に失敗しました。', 'error');
-                }
             };
 
             const resetForm = () => {
                 form.reset();
-                setToday();
+                setToday(recordDateInput);
+                setToday(loadDateInput);
                 showStatusMessage('フォームをリセットしました。', 'info');
             };
             
@@ -408,12 +377,12 @@
             };
 
             // --- 初期化処理 ---
-            setToday(); 
-            loadDataFromSheet(); // アプリ起動時にスプレッドシートから読み込み
+            setToday(recordDateInput);
+            setToday(loadDateInput);
 
             // --- イベントリスナー設定 ---
             saveButton.addEventListener('click', saveData);
-            loadButton.addEventListener('click', loadDataFromBrowser);
+            loadButton.addEventListener('click', loadDataFromSheet);
             resetButton.addEventListener('click', resetForm);
         });
     </script>
