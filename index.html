@@ -23,6 +23,28 @@
         body {
             -webkit-tap-highlight-color: transparent; /* スマホでのタップ時のハイライトを無効化 */
         }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans">
@@ -30,7 +52,7 @@
         
         <header class="text-center mb-6">
             <h1 class="text-3xl font-bold text-blue-400">現場日報</h1>
-            <p class="text-gray-400 mt-2">担当者名を入力して、前回の内容を読み込めます。</p>
+            <p class="text-gray-400 mt-2">報告者名で前回の内容を読み込み、日報をBaseに送信できます。</p>
         </header>
 
         <main id="report-form" class="bg-gray-800 p-6 rounded-2xl shadow-2xl space-y-8">
@@ -39,34 +61,24 @@
             <section class="space-y-4">
                 <h2 class="text-xl font-semibold text-blue-300 border-b border-gray-700 pb-2">基本情報</h2>
                 
-                <!-- 責任者 -->
                 <div>
-                    <label for="manager-name" class="block mb-2 text-sm font-medium text-gray-300">現場責任者 (保存・読み込みのキー)</label>
+                    <label for="reporter" class="block mb-2 text-sm font-medium text-gray-300">報告者 (ローカル保存・読み込みのキー)</label>
                     <div class="flex items-center gap-2">
-                        <input type="text" id="manager-name" placeholder="例：田中 太郎" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <input type="text" id="reporter" placeholder="例：田中 太郎" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         <button id="load-button" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">読み込み</button>
                     </div>
                 </div>
 
-                <!-- 日付 -->
                 <div>
-                    <label for="report-date" class="block mb-2 text-sm font-medium text-gray-300">日付</label>
-                    <input type="date" id="report-date" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <label for="record-date" class="block mb-2 text-sm font-medium text-gray-300">記録日</label>
+                    <input type="date" id="record-date" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                 </div>
 
-                <!-- 案件番号 -->
                 <div>
-                    <label for="project-number" class="block mb-2 text-sm font-medium text-gray-300">案件番号</label>
-                    <input type="text" id="project-number" placeholder="例：P2023-001" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                </div>
-
-                <!-- 現場名 -->
-                <div>
-                    <label for="site-name" class="block mb-2 text-sm font-medium text-gray-300">現場名</label>
-                    <input type="text" id="site-name" placeholder="例：〇〇ビル新築工事" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <label for="subject-name" class="block mb-2 text-sm font-medium text-gray-300">件名</label>
+                    <input type="text" id="subject-name" placeholder="例：〇〇ビル新築工事" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                 </div>
                 
-                <!-- 天候 -->
                 <div>
                     <label for="weather" class="block mb-2 text-sm font-medium text-gray-300">天候</label>
                     <select id="weather" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
@@ -77,66 +89,73 @@
                         <option>その他</option>
                     </select>
                 </div>
-
-                <!-- 作業時間 -->
+                
                 <div>
-                    <label class="block mb-2 text-sm font-medium text-gray-300">作業時間</label>
-                    <div class="grid grid-cols-2 gap-4">
+                    <label for="progress-rate" class="block mb-2 text-sm font-medium text-gray-300">進捗率 (%)</label>
+                    <input type="number" id="progress-rate" placeholder="例：50" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+            </section>
+
+            <!-- 人員セクション -->
+            <section class="space-y-4">
+                <h2 class="text-xl font-semibold text-blue-300 border-b border-gray-700 pb-2">人員</h2>
+                 <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-300">出面 (人数)</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                             <label for="start-time" class="block mb-1 text-xs font-medium text-gray-400">開始</label>
-                            <input type="time" id="start-time" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                             <label for="total-mandays" class="block mb-1 text-xs font-medium text-gray-400">総出面</label>
+                            <input type="number" id="total-mandays" placeholder="0" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         </div>
                         <div>
-                            <label for="end-time" class="block mb-1 text-xs font-medium text-gray-400">終了</label>
-                            <input type="time" id="end-time" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            <label for="main-office-mandays" class="block mb-1 text-xs font-medium text-gray-400">本社出面</label>
+                            <input type="number" id="main-office-mandays" placeholder="0" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        </div>
+                        <div>
+                            <label for="subcontractor-mandays" class="block mb-1 text-xs font-medium text-gray-400">協力会社出面</label>
+                            <input type="number" id="subcontractor-mandays" placeholder="0" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         </div>
                     </div>
                 </div>
             </section>
 
+
             <!-- 作業詳細セクション -->
             <section class="space-y-4">
                 <h2 class="text-xl font-semibold text-blue-300 border-b border-gray-700 pb-2">作業詳細</h2>
-                <!-- 作業員 -->
-                <div>
-                    <label for="workers" class="block mb-2 text-sm font-medium text-gray-300">作業員（人員）</label>
-                    <textarea id="workers" rows="4" placeholder="一人ずつ改行して入力&#10;例：&#10;鈴木 一郎&#10;佐藤 次郎" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                </div>
-
-                <!-- 作業内容 -->
                 <div>
                     <label for="work-details" class="block mb-2 text-sm font-medium text-gray-300">作業内容</label>
                     <textarea id="work-details" rows="6" placeholder="本日の具体的な作業内容を記載" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
-                
-                <!-- 使用機材 -->
+
                 <div>
-                    <label for="equipment" class="block mb-2 text-sm font-medium text-gray-300">使用機材・車両</label>
-                    <textarea id="equipment" rows="3" placeholder="例：&#10;バックホウ 1台&#10;2tトラック 2台" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <label for="materials-used" class="block mb-2 text-sm font-medium text-gray-300">使用材料</label>
+                    <textarea id="materials-used" rows="3" placeholder="例：&#10;セメント 10袋&#10;砂 1㎥" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                
+                <div>
+                    <label for="machinery" class="block mb-2 text-sm font-medium text-gray-300">使用機械</label>
+                    <textarea id="machinery" rows="3" placeholder="例：&#10;バックホウ 1台&#10;2tトラック 2台" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
             </section>
 
             <!-- その他セクション -->
             <section class="space-y-4">
                 <h2 class="text-xl font-semibold text-blue-300 border-b border-gray-700 pb-2">その他</h2>
-                <!-- 備考 -->
                 <div>
-                    <label for="remarks" class="block mb-2 text-sm font-medium text-gray-300">備考・特記事項</label>
-                    <textarea id="remarks" rows="3" placeholder="ヒヤリハット、資材搬入予定などを記載" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <label for="hazard-prediction" class="block mb-2 text-sm font-medium text-gray-300">危険予知活動</label>
+                    <textarea id="hazard-prediction" rows="3" placeholder="本日の危険予知活動の内容を記載" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
-
-                <!-- 添付ファイル -->
                 <div>
-                    <label for="attachments" class="block mb-2 text-sm font-medium text-gray-300">添付ファイル</label>
-                    <input type="file" id="attachments" multiple class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-colors duration-200">
-                    <p class="mt-1 text-xs text-gray-500">※プロトタイプのためファイルは保存されません。</p>
+                    <label for="special-notes" class="block mb-2 text-sm font-medium text-gray-300">特記事項</label>
+                    <textarea id="special-notes" rows="3" placeholder="ヒヤリハット、資材搬入予定などを記載" class="block p-2.5 w-full text-sm text-white bg-gray-700 rounded-lg border border-gray-600 focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
             </section>
             
             <!-- 操作ボタン -->
             <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                <button id="save-button" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
-                    内容を保存する
+                <button id="save-button" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200 flex items-center justify-center disabled:opacity-50">
+                    <span id="save-button-text">保存してBaseに送信</span>
+                    <div id="save-spinner" class="loader hidden"></div>
                 </button>
                 <button id="reset-button" class="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
                     フォームをリセット
@@ -144,7 +163,7 @@
             </div>
             
             <!-- ステータスメッセージ -->
-            <div id="status-message" class="text-center text-sm font-medium h-5"></div>
+            <div id="status-message" class="text-center text-sm font-medium h-5 mt-4"></div>
 
         </main>
     </div>
@@ -153,21 +172,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('report-form');
             const saveButton = document.getElementById('save-button');
+            const saveButtonText = document.getElementById('save-button-text');
+            const saveSpinner = document.getElementById('save-spinner');
             const loadButton = document.getElementById('load-button');
             const resetButton = document.getElementById('reset-button');
             const statusMessage = document.getElementById('status-message');
-            const dateInput = document.getElementById('report-date');
-            const managerNameInput = document.getElementById('manager-name');
+            const dateInput = document.getElementById('record-date');
+            const reporterInput = document.getElementById('reporter');
 
-            const STORAGE_KEY = 'dailyWorkReportData_v3';
+            const STORAGE_KEY = 'dailyWorkReportData_v4'; // バージョン更新
+            const LARK_WEBHOOK_URL = 'https://yjpw4ydvu698.jp.larksuite.com/base/automation/webhook/event/ELpOaUtY9wTb1KhubYHjrOF9pTf';
 
-            // 保存・読み込み対象のフォーム要素IDのリスト
+            // 保存・読み込み対象のフォーム要素IDのリストを更新
             const formElementIds = [
-                'report-date', 'project-number', 'site-name', 'weather', 'start-time', 'end-time',
-                'workers', 'work-details', 'equipment', 'remarks'
+                'record-date', 'subject-name', 'weather', 'progress-rate',
+                'total-mandays', 'main-office-mandays', 'subcontractor-mandays',
+                'work-details', 'materials-used', 'machinery', 
+                'hazard-prediction', 'special-notes'
             ];
-            const allFormElementIds = ['manager-name', ...formElementIds];
-
+            const allFormElementIds = ['reporter', ...formElementIds];
 
             // 今日の日付をYYYY-MM-DD形式で設定する
             const setToday = () => {
@@ -178,84 +201,123 @@
 
             // 担当者名で最新のデータを読み込む
             const loadManagerData = () => {
-                const managerName = managerNameInput.value.trim();
-                if (!managerName) {
-                    showStatusMessage('現場責任者名を入力してください。', 'error');
+                const reporterName = reporterInput.value.trim();
+                if (!reporterName) {
+                    showStatusMessage('報告者名を入力してください。', 'error');
                     return;
                 }
 
                 try {
                     const allData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                    const managerReports = allData[managerName];
+                    const reporterReports = allData[reporterName];
 
-                    if (managerReports && managerReports.length > 0) {
-                        // 日付で降順にソートして最新のものを取得
-                        managerReports.sort((a, b) => new Date(b['report-date']) - new Date(a['report-date']));
-                        const latestReport = managerReports[0];
+                    if (reporterReports && reporterReports.length > 0) {
+                        reporterReports.sort((a, b) => new Date(b['record-date']) - new Date(a['record-date']));
+                        const latestReport = reporterReports[0];
                         
-                        // フォーム要素に値を設定
                         allFormElementIds.forEach(id => {
                             const element = document.getElementById(id);
                             if (element && latestReport[id] !== undefined) {
                                 element.value = latestReport[id];
                             }
                         });
-                        setToday(); // 日付は今日に設定
-                        showStatusMessage(`${managerName}さんの前回の内容を読み込みました。`, 'success');
+                        setToday(); 
+                        showStatusMessage(`${reporterName}さんの前回の内容を読み込みました。`, 'success');
                     } else {
-                        showStatusMessage(`${managerName}さんの保存されたデータはありません。`, 'info');
+                        showStatusMessage(`${reporterName}さんの保存されたデータはありません。`, 'info');
                     }
                 } catch (e) {
                     console.error("データの読み込みに失敗しました:", e);
                     showStatusMessage('読み込みに失敗しました。', 'error');
                 }
             };
-
-            // フォームの現在のデータを担当者別に保存する
-            const saveData = () => {
-                const managerName = managerNameInput.value.trim();
-                if (!managerName) {
-                    showStatusMessage('現場責任者名を入力してください。保存できません。', 'error');
+            
+            // フォームの現在のデータを担当者別に保存し、Webhookで送信する
+            const saveData = async () => {
+                const reporterName = reporterInput.value.trim();
+                if (!reporterName) {
+                    showStatusMessage('報告者名を入力してください。保存できません。', 'error');
                     return;
                 }
 
+                saveButton.disabled = true;
+                saveButtonText.textContent = '送信中...';
+                saveSpinner.classList.remove('hidden');
+
+                // Lark Baseのフィールド名に合わせたリクエストボディを作成
+                const larkRecord = {
+                    "件名": document.getElementById('subject-name').value,
+                    "記録日": document.getElementById('record-date').value,
+                    "報告者": reporterName,
+                    "天候": document.getElementById('weather').value,
+                    "総出面": Number(document.getElementById('total-mandays').value) || 0,
+                    "本社出面": Number(document.getElementById('main-office-mandays').value) || 0,
+                    "協力会社出面": Number(document.getElementById('subcontractor-mandays').value) || 0,
+                    "作業内容": document.getElementById('work-details').value,
+                    "使用機械": document.getElementById('machinery').value,
+                    "特記事項": document.getElementById('special-notes').value,
+                    "進捗率": Number(document.getElementById('progress-rate').value) || 0,
+                    "使用材料": document.getElementById('materials-used').value,
+                    "危険予知活動": document.getElementById('hazard-prediction').value,
+                };
+
+                try {
+                    const response = await fetch(LARK_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(larkRecord),
+                    });
+
+                    if (!response.ok) throw new Error(`サーバーエラー: ${response.status}`);
+                    
+                    const result = await response.json();
+                    if(result.code === 0 && result.msg === "success") {
+                        showStatusMessage('Baseへの送信に成功しました！', 'success');
+                    } else {
+                        throw new Error(result.msg || '不明なエラー');
+                    }
+                } catch (error) {
+                    console.error('Webhook送信エラー:', error);
+                    showStatusMessage(`Baseへの送信に失敗: ${error.message}`, 'error');
+                } finally {
+                    saveButton.disabled = false;
+                    saveButtonText.textContent = '保存してBaseに送信';
+                    saveSpinner.classList.add('hidden');
+                }
+
+                // ローカルストレージに保存
                 const currentReport = {};
                 allFormElementIds.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        currentReport[id] = element.value;
-                    }
+                    currentReport[id] = document.getElementById(id)?.value || '';
                 });
 
                 try {
                     const allData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-                    const managerReports = allData[managerName] || [];
+                    const reporterReports = allData[reporterName] || [];
                     
-                    // 同じ日付のレポートがあれば更新、なければ追加
-                    const reportIndex = managerReports.findIndex(r => r['report-date'] === currentReport['report-date']);
+                    const reportIndex = reporterReports.findIndex(r => r['record-date'] === currentReport['record-date']);
                     if (reportIndex > -1) {
-                        managerReports[reportIndex] = currentReport;
+                        reporterReports[reportIndex] = currentReport;
                     } else {
-                        managerReports.push(currentReport);
+                        reporterReports.push(currentReport);
                     }
                     
-                    allData[managerName] = managerReports;
+                    allData[reporterName] = reporterReports;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-                    showStatusMessage('入力内容を保存しました。', 'success');
                 } catch (e) {
-                    console.error("データの保存に失敗しました:", e);
-                    showStatusMessage('保存に失敗しました。', 'error');
+                    console.error("ローカル保存に失敗:", e);
+                    showStatusMessage('ローカルへの保存に失敗しました。', 'error');
                 }
             };
 
-            // フォームの表示をリセットする
             const resetForm = () => {
                 form.reset();
                 setToday();
                 showStatusMessage('フォームをリセットしました。', 'info');
             };
             
-            // ユーザーにフィードバックメッセージを表示する
             const showStatusMessage = (message, type) => {
                 statusMessage.textContent = message;
                 const colors = {
@@ -263,19 +325,17 @@
                     error: 'text-red-400',
                     info: 'text-yellow-400',
                 };
-                statusMessage.className = `text-center text-sm font-medium h-5 ${colors[type] || 'text-gray-400'}`;
+                statusMessage.className = `text-center text-sm font-medium h-5 mt-4 ${colors[type] || 'text-gray-400'}`;
                 
                 setTimeout(() => {
                     statusMessage.textContent = '';
-                }, 3000);
+                }, 5000);
             };
 
-            // イベントリスナーを設定
             saveButton.addEventListener('click', saveData);
             loadButton.addEventListener('click', loadManagerData);
             resetButton.addEventListener('click', resetForm);
 
-            // 初期化
             setToday();
         });
     </script>
