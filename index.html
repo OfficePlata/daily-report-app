@@ -268,8 +268,13 @@
                     const recorderReports = allData[recorderName];
 
                     if (recorderReports && recorderReports.length > 0) {
-                        recorderReports.sort((a, b) => new Date(b['record-date']) - new Date(a['record-date']));
-                        const latestReport = recorderReports[0];
+                        // 日付でソートするのではなく、最新のものをreduceで探し出すように変更
+                        const latestReport = recorderReports.reduce((latest, current) => {
+                            if (!latest['record-date'] || new Date(current['record-date']) > new Date(latest['record-date'])) {
+                                return current;
+                            }
+                            return latest;
+                        }, recorderReports[0]);
                         
                         allFormElementIds.forEach(id => {
                             const element = document.getElementById(id);
