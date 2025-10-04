@@ -56,7 +56,7 @@
             <p class="text-gray-400 mt-2">記録者名で前回の内容を読み込み、日報をBaseに送信できます。</p>
         </header>
 
-        <main id="report-form" class="bg-gray-800 p-6 rounded-2xl shadow-2xl space-y-8">
+        <form id="report-form" class="bg-gray-800 p-6 rounded-2xl shadow-2xl space-y-8">
             
             <!-- 基本情報セクション -->
             <section class="space-y-4">
@@ -66,7 +66,7 @@
                     <label for="recorder" class="block mb-2 text-sm font-medium text-gray-300">記録者 (ローカル保存・読み込みのキー)</label>
                     <div class="flex items-center gap-2">
                         <input type="text" id="recorder" placeholder="例：田中 太郎" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                        <button id="load-button" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">読み込み</button>
+                        <button id="load-button" type="button" class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">読み込み</button>
                     </div>
                 </div>
 
@@ -206,11 +206,11 @@
             
             <!-- 操作ボタン -->
             <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                <button id="save-button" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200 flex items-center justify-center disabled:opacity-50">
+                <button id="save-button" type="button" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200 flex items-center justify-center disabled:opacity-50">
                     <span id="save-button-text">保存してBaseに送信</span>
                     <div id="save-spinner" class="loader hidden"></div>
                 </button>
-                <button id="reset-button" class="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
+                <button id="reset-button" type="button" class="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
                     フォームをリセット
                 </button>
             </div>
@@ -218,7 +218,7 @@
             <!-- ステータスメッセージ -->
             <div id="status-message" class="text-center text-sm font-medium h-5 mt-4"></div>
 
-        </main>
+        </form>
     </div>
 
     <script>
