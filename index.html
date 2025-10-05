@@ -204,7 +204,7 @@
                     </div>
                     <div>
                         <label for="total-cost" class="block mb-2 text-sm font-medium text-gray-300">原価合計</label>
-                        <input type="number" id="total-cost" placeholder="0" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <input type="number" id="total-cost" placeholder="0" class="bg-gray-600 border border-gray-500 text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" readonly>
                     </div>
                  </div>
             </section>
@@ -251,10 +251,19 @@
             const recorderInput = document.getElementById('recorder');
             const recordDateInput = document.getElementById('record-date');
 
+            // --- 原価計算用の要素を取得 ---
+            const materialCostInput = document.getElementById('material-cost');
+            const laborCostInput = document.getElementById('labor-cost');
+            const machineryCostInput = document.getElementById('machinery-cost');
+            const outsourcingCostInput = document.getElementById('outsourcing-cost');
+            const siteExpenseInput = document.getElementById('site-expense');
+            const totalCostInput = document.getElementById('total-cost');
+            const costInputs = [materialCostInput, laborCostInput, machineryCostInput, outsourcingCostInput, siteExpenseInput];
+
 
             // --- ▼▼▼ 設定項目 ▼▼▼ ---
             // データを中継するGAS（クライアントサイド）のWebアプリURL
-            const GAS_CLIENT_URL = 'https://script.google.com/macros/s/AKfycbxua2AJ0wheh72my6FHP3flpZagHVmY4TOvanXzEylz5qJqmCRR3-1ZAD4QGjVXNy30TA/exec'; 
+            const GAS_CLIENT_URL = 'YOUR_GAS_CLIENT_URL'; 
             // データをLark Baseに送るWebhook URL
             const LARK_WEBHOOK_URL = 'https://yjpw4ydvu698.jp.larksuite.com/base/automation/webhook/event/QJHWaPXK6wVAOdhMQOPjkV90pwf';
             // --- ▲▲▲ 設定項目 ▲▲▲ ---
@@ -270,6 +279,14 @@
                 "自社労務": "inhouse-labor", "機械": "machinery", "外注": "outsourcing",
                 "材料費": "material-cost", "労務費": "labor-cost", "機械費": "machinery-cost",
                 "外注費": "outsourcing-cost", "現場経費": "site-expense", "原価合計": "total-cost",
+            };
+
+            // --- 原価合計を自動計算する関数 ---
+            const calculateTotalCost = () => {
+                const total = costInputs.reduce((sum, input) => {
+                    return sum + (Number(input.value) || 0);
+                }, 0);
+                totalCostInput.value = total;
             };
 
             const setToday = (dateInputElement) => {
@@ -308,8 +325,9 @@
                             element.value = data[fieldName];
                         }
                     }
-                    // 読み込みに成功したら、記録日を今日の日付に更新する
-                    setToday(recordDateInput);
+                    
+                    calculateTotalCost(); // 読み込み後に合計を計算
+                    setToday(recordDateInput); // 記録日を今日の日付に更新
                     showStatusMessage('過去の日報を読み込みました。記録日は本日になっています。', 'success');
 
                 } catch(e) {
@@ -327,6 +345,8 @@
                 saveButton.disabled = true;
                 saveButtonText.textContent = '送信中...';
                 saveSpinner.classList.remove('hidden');
+
+                calculateTotalCost(); // 送信前に最新の合計を計算
 
                 const larkRecord = {};
                  Object.entries(fieldNameToIdMap).forEach(([fieldName, elementId]) => {
@@ -359,6 +379,7 @@
 
             const resetForm = () => {
                 form.reset();
+                calculateTotalCost(); // リセット後に合計を0に戻す
                 setToday(recordDateInput);
                 setToday(loadDateInput);
                 showStatusMessage('フォームをリセットしました。', 'info');
@@ -384,6 +405,9 @@
             saveButton.addEventListener('click', saveData);
             loadButton.addEventListener('click', loadDataFromSheet);
             resetButton.addEventListener('click', resetForm);
+            costInputs.forEach(input => {
+                input.addEventListener('input', calculateTotalCost);
+            });
         });
     </script>
 </body>
