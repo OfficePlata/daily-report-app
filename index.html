@@ -31,7 +31,6 @@
             height: 20px;
             animation: spin 1s linear infinite;
             display: inline-block;
-            margin-right: 8px;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -71,8 +70,9 @@
                         <input type="date" id="load-date" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                     </div>
                 </div>
-                 <button id="load-button" type="button" class="w-full mt-4 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap">
-                    この条件で日報を読み込む
+                 <button id="load-button" type="button" class="w-full mt-4 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-800 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors duration-200 whitespace-nowrap flex items-center justify-center disabled:opacity-50">
+                    <span id="load-button-text">この条件で日報を読み込む</span>
+                    <div id="load-spinner" class="loader hidden" style="margin-right: 0;"></div>
                 </button>
             </section>
 
@@ -223,7 +223,7 @@
             <div class="flex flex-col sm:flex-row gap-4 pt-4">
                 <button id="save-button" type="button" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200 flex items-center justify-center disabled:opacity-50">
                     <span id="save-button-text">保存してBaseに送信</span>
-                    <div id="save-spinner" class="loader hidden"></div>
+                    <div id="save-spinner" class="loader hidden" style="margin-right: 8px;"></div>
                 </button>
                 <button id="reset-button" type="button" class="w-full text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-200">
                     フォームをリセット
@@ -243,6 +243,8 @@
             const saveButtonText = document.getElementById('save-button-text');
             const saveSpinner = document.getElementById('save-spinner');
             const loadButton = document.getElementById('load-button');
+            const loadButtonText = document.getElementById('load-button-text');
+            const loadSpinner = document.getElementById('load-spinner');
             const resetButton = document.getElementById('reset-button');
             const statusMessage = document.getElementById('status-message');
             
@@ -309,6 +311,9 @@
                     return;
                 }
 
+                loadButton.disabled = true;
+                loadButtonText.classList.add('hidden');
+                loadSpinner.classList.remove('hidden');
                 showStatusMessage('スプレッドシートからデータを検索中...', 'info');
                 const searchUrl = `${GAS_CLIENT_URL}?recorder=${encodeURIComponent(recorderName)}&date=${encodeURIComponent(loadDate)}`;
                 
@@ -333,6 +338,10 @@
                 } catch(e) {
                     console.error("スプレッドシートからの読み込みエラー:", e);
                     showStatusMessage(`データが見つからないか、エラーが発生しました: ${e.message}`, 'error');
+                } finally {
+                    loadButton.disabled = false;
+                    loadButtonText.classList.remove('hidden');
+                    loadSpinner.classList.add('hidden');
                 }
             };
             
@@ -343,8 +352,9 @@
                     return;
                 }
                 saveButton.disabled = true;
-                saveButtonText.textContent = '送信中...';
+                saveButtonText.classList.add('hidden');
                 saveSpinner.classList.remove('hidden');
+                
 
                 calculateTotalCost(); // 送信前に最新の合計を計算
 
@@ -372,7 +382,7 @@
                     showStatusMessage(`Baseへの送信に失敗: ${error.message}`, 'error');
                 } finally {
                     saveButton.disabled = false;
-                    saveButtonText.textContent = '保存してBaseに送信';
+                    saveButtonText.classList.remove('hidden');
                     saveSpinner.classList.add('hidden');
                 }
             };
